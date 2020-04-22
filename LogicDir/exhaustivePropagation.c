@@ -2,6 +2,32 @@
 #include "handler.h"
 #include "printer.h"
 
+
+/*
+* finds new units clauses.
+*/
+void findNewUnits(monoClause* mono, clause* newCurrent) {
+  //checks the linked list is not empty
+  if (newCurrent != NULL) {
+    //checks there is only 1 item in the linked list.
+    if (newCurrent->next == NULL) {
+      //loops until we get to the end of mono linked list.
+      while(1) {
+        //finds the last item because the end is not null
+        if (mono->next == NULL) {
+          //adds the character to the end.
+          mono ->next = (monoClause*) malloc(sizeof(monoClause));
+          mono->next->unitClause = newCurrent->clauseName;
+          mono->next->next = NULL;
+          break;
+        }
+        //goe to the next node.
+        mono = mono->next;
+      }
+    }
+  }
+}
+
 /*
 * performs a single instance of unit propagation.
 */
@@ -68,25 +94,7 @@ clause* propagate(monoClause* mono, clause* expression) {
         newCurrent->next = newClause;
       }
 
-      //checks the linked list is not empty
-      if (newCurrent != NULL) {
-        //checks there is only 1 item in the linked list.
-        if (newCurrent->next == NULL) {
-          //loops until we get to the end of mono linked list.
-          while(1) {
-            //finds the last item because the end is not null
-            if (mono->next == NULL) {
-              //adds the character to the end.
-              mono ->next = (monoClause*) malloc(sizeof(monoClause));
-              mono->next->unitClause = newCurrent->clauseName;
-              mono->next->next = NULL;
-              break;
-            }
-            //goe to the next node.
-            mono = mono->next;
-          }
-        }
-      }
+      findNewUnits(mono, newCurrent);
       //returns the head of the next clause.
       return newCurrent;
     }
