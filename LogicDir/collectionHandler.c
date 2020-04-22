@@ -116,15 +116,13 @@ clause* generateClause(char *line) {
 */
 formula* createClauses() {
   //assumes there is a contradiction
-  contradiction invalid = TRUE;
+  contradiction invalid = FALSE;
   formula* base = (formula *) malloc(sizeof(formula));
   formula* current = base;
   current->formulaName = NULL;
   char * string = NULL;
   unsigned long newsize = 0;
   while(getline(&string, &newsize, stdin) != -1) {
-    //assumes there is a not contradiction sicne there is one valid line
-    contradiction invalid = FALSE;
     //checks if it is the head of the linked list.
     if (base->formulaName == NULL) {
      current->formulaName = generateClause(string);
@@ -161,7 +159,7 @@ monoClause* generateMonoClauses(formula* clauses) {
   formula* currentFormula = clauses;
   //stores the head of the linked list that will store the unit clauses found
   monoClause* base = (monoClause *) malloc(sizeof(monoClause));
-  monoClause* currentClause = base
+  monoClause* currentClause = base;
   //initialies its members to NULL
   currentClause->unitClause = NULL;
   currentClause->next = NULL;
