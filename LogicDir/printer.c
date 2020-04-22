@@ -5,7 +5,6 @@
 * Then Exits program
 */
 void printEmpty() {
-  printf("");
   exit(1);
 }
 
@@ -14,7 +13,7 @@ void printEmpty() {
 * Then Exits Program
 */
 void printContradiction(){
-  printf("-");
+  printf("-\n");
   exit(1);
 }
 
