@@ -1,8 +1,39 @@
 #include "collection.h"
 
-//
+void freeClause(clause* expression) {
+  clause* current = expression;
+  while(current!=NULL) {
+    clause* temp = current;
+    current = current->next;
+    free(temp->clauseName);
+    free(temp);
+  }
+}
+
+void freeFormula(formula* expression) {
+  formula* current = expression;
+  while(current!=NULL) {
+    formula* temp = current;
+    current = current->next;
+    freeClause(temp->formulaName);
+    free(temp);
+  }
+}
+
+int contains(literal* expression1, literal* expression2) {
+  if (strcmp(expression1->unitName, expression2->unitName) == 0) {
+    if (expression1->type == expression2->type) {
+      return POSITIVE;
+    }
+    else {
+      return NEGATIVE;
+    }
+  }
+  return - 1;
+}
+
 literal* generateLiteral(char *name) {
-  literal* expression = (literal *) malloc(sizeof(unit));
+  literal* expression = (literal *) malloc(sizeof(literal));
   if (name[0] == '-'){
     expression->unitName = name + 1;
     expression->type = NEGATIVE;
@@ -14,49 +45,9 @@ literal* generateLiteral(char *name) {
   return expression;
 }
 
-//need to free dynamically allocated space
-formula* createClauses() {
-  contradiction invalid = FALSE;
-  formula* base = (formula *) malloc(sizeof(formula));
-  formula* current = base;
-  current->fname = NULL;
-  char * string = NULL;
-  unsigned long newsize = 0;
-
-  while(getline(&string, &newsize, stdin) != -1) {
-
-    if (base->fname == NULL) {
-     current->fname = generateClause(string);
-     current->next = NULL;
-    }
-    else {
-      current->next = (formula *) malloc(sizeof(formula));
-      current->next->fname = generateClause(string);
-      current->next->next = NULL;
-      current = current->next;
-    }
-   if (current->fname == NULL) {
-     invalid = TRUE;
-     break;
-   }
-  }
-  if (invalid == TRUE) {
-    freeFormula(base);
-    return NULL;
-  }
-  return base;
-}
-
-//free dynamically allocated space.
 clause* generateClause(char *line) {
   contradiction invalid = FALSE;
   clause* base = (clause *) malloc(sizeof(clause));
-  //makes a new string
-  // char temp[strlen(line)];
-  //this is correct way
-  // strncpy(temp, line,strlen(line));
-  // temp[strlen(line)] = '\0';
-  // printf("temp is: %s\n", temp);
   char* temp = malloc(strlen(line) + 1);
   if (temp == NULL) exit(0);
   strcpy(temp,line);
@@ -86,6 +77,39 @@ clause* generateClause(char *line) {
   return base;
 }
 
+//need to free dynamically allocated space
+formula* createClauses() {
+  contradiction invalid = FALSE;
+  formula* base = (formula *) malloc(sizeof(formula));
+  formula* current = base;
+  current->formulaName = NULL;
+  char * string = NULL;
+  unsigned long newsize = 0;
+
+  while(getline(&string, &newsize, stdin) != -1) {
+
+    if (base->formulaName == NULL) {
+     current->formulaName = generateClause(string);
+     current->next = NULL;
+    }
+    else {
+      current->next = (formula *) malloc(sizeof(formula));
+      current->next->formulaName = generateClause(string);
+      current->next->next = NULL;
+      current = current->next;
+    }
+   if (current->formulaName == NULL) {
+     invalid = TRUE;
+     break;
+   }
+  }
+  if (invalid == TRUE) {
+    freeFormula(base);
+    return NULL;
+  }
+  return base;
+}
+
 monoClause* generateMonoClauses(formula* clauses) {
   formula* currentFormula = clauses;
   monoClause* base = (monoClause *) malloc(sizeof(monoClause));
@@ -94,18 +118,16 @@ monoClause* generateMonoClauses(formula* clauses) {
   currentClause->next = NULL;
   while (currentFormula != NULL){
     // check if it's monoclause
-    if (currentFormula->fname->next == NULL) {      //check if it is the first to be added to mono clause linked list.
+    if (currentFormula->formulaName->next == NULL) {      //check if it is the first to be added to mono clause linked list.
       if(currentClause->unitClause == NULL) {
-        currentClause->unitClause = currentFormula->fname->clauseName;
-        //currentFormula->fname = NULL;
+        currentClause->unitClause = currentFormula->formulaName->clauseName;
       }
       else {
         currentClause->next = (monoClause *) malloc(sizeof(monoClause));
-        currentClause->next->unitClause = currentFormula->fname->clauseName;
+        currentClause->next->unitClause = currentFormula->formulaName->clauseName;
         currentClause->next->next = NULL;
         currentClause = currentClause->next;
       }
-      //currentFormula->fname = NULL;
     }
     currentFormula = currentFormula->next;
   }
@@ -134,36 +156,4 @@ monoClause* addSorted(monoClause* mono, literal* expression) {
     mono->next = addSorted(mono->next, expression);
     return mono;
   }
-}
-
-void freeClause(clause* expression) {
-  clause* current = expression;
-  while(current!=NULL) {
-    clause* temp = current;
-    current = current->next;
-    free(temp->clauseName);
-    free(temp);
-  }
-}
-
-void freeFormula(formula* expression) {
-  formula* current = expression;
-  while(current!=NULL) {
-    formula* temp = current;
-    current = current->next;
-    freeClause(temp->fname);
-    free(temp);
-  }
-}
-
-int contains(literal* expression1, literal* expression2) {
-  if (strcmp(expression1->unitName, expression2->unitName) == 0) {
-    if (expression1->type == expression2->type) {
-      return POSITIVE;
-    }
-    else {
-      return NEGATIVE;
-    }
-  }
-  return - 1;
 }

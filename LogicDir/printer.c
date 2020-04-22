@@ -1,5 +1,5 @@
 #include "collection.h"
-#include <stdio.h>
+
 /*
 * Prints nothing as no unit clauses were found.
 * Then Exits program

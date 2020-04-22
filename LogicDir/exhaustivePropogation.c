@@ -2,34 +2,6 @@
 #include "handler.h"
 #include "printer.h"
 
-
-/*
-* Determins the total number of unit clauses obtainable through unit propogation.
-*/
-void determineUnitClauses() {
-
-  //prints contradiction in the event an empty line was found.
-  formula* clauses = createClauses();
-  if (clauses == NULL) {
-    printContradiction();
-  }
-
-  //prints empty if no unit clauses were found.
-  monoClause* unitClauses = generateMonoClauses(clauses);
-  if (unitClauses == NULL) {
-    printEmpty();
-  }
-
-  //prints the found clauses or prints contradiction if one was found.
-  monoClause* foundClauses = propogateOver(unitClauses, clauses);
-  if (foundClauses == NULL) {
-    printContradiction();
-  }
-  else {
-    printFound(foundClauses);
-  }
-}
-
 /*
 * performs a single instance of unit propogation.
 */
@@ -142,25 +114,25 @@ formula* unitPropogation(monoClause* mono, formula* clauses) {
   //Determins if contradiction has been found.
   int invalid = NEGATIVE;
   //intialising it so it is empty.
-  nextClauses-> fname = NULL;
+  nextClauses-> formulaName = NULL;
   //Loops over every clause that propogation is ran on.
   while(currentFormula != NULL) {
     //gets the clause from formula
-    clause* currentClause = currentFormula->fname;
+    clause* currentClause = currentFormula->formulaName;
     //this gets the updated clause from propogate after unit propgation is ran on it.
     clause* newClause = propogate(mono, currentClause);
     //if unit propgation returns null then there was a contradiction.
     if (newClause != NULL) {
       //checks if the head has anything it and if not adds it to the head of linked list.
-      if (base->fname == NULL) {
+      if (base->formulaName == NULL) {
         //adds it to the head of the linked list.
-        base->fname = newClause;
+        base->formulaName = newClause;
       }
       else {
         //This then creates space for the next item in the linked list.
         nextClauses->next = (formula *) malloc(sizeof(formula));
         //This then adds the new clause to the next item in the linked list.
-        nextClauses->next->fname = newClause;
+        nextClauses->next->formulaName = newClause;
         nextClauses->next->next = NULL;
         //moves to the next node in the lisked list.
         nextClauses = nextClauses->next;
@@ -209,4 +181,31 @@ monoClause* propogateOver(monoClause* unitClauses, formula* clauses) {
   }
   //return the ordered linked list
   return orderMono;
+}
+
+/*
+* Determins the total number of unit clauses obtainable through unit propogation.
+*/
+void determineUnitClauses() {
+
+  //prints contradiction in the event an empty line was found.
+  formula* clauses = createClauses();
+  if (clauses == NULL) {
+    printContradiction();
+  }
+
+  //prints empty if no unit clauses were found.
+  monoClause* unitClauses = generateMonoClauses(clauses);
+  if (unitClauses == NULL) {
+    printEmpty();
+  }
+
+  //prints the found clauses or prints contradiction if one was found.
+  monoClause* foundClauses = propogateOver(unitClauses, clauses);
+  if (foundClauses == NULL) {
+    printContradiction();
+  }
+  else {
+    printFound(foundClauses);
+  }
 }

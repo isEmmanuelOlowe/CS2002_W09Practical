@@ -8,5 +8,5 @@ monoClause* generateMonoClauses(formula* clauses);
 monoClause* addSorted(monoClause*, literal* expression);
 void freeClause(clause* expression);
 void freeFormula(formula* expression);
-void contains(ltieral* expression1, literal* expression2);
+int contains(literal* expression1, literal* expression2);
 #endif

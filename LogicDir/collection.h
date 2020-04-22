@@ -3,13 +3,15 @@
 #define COLLECTION_H
 #define NEGATIVE 0
 #define POSITIVE 1
-#define TRUE
-#define FALSE
+#define TRUE 1
+#define FALSE 0
 #define contradiction int
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
+
 /*
 * Stores a found literall and wether it is true or faslse.
 */
@@ -35,7 +37,7 @@ typedef struct _formula {
   // stores the next clauses which make up the formula.
   //All clauses can be found by traversing this linked list.
   clause* formulaName;
-  struct formula* next;
+  struct _formula* next;
 } formula;
 
 /*
