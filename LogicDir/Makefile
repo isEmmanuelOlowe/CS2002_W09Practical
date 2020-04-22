@@ -3,6 +3,8 @@ CFLAGS = -c -Wall -Wextra -O2
 LFLAGS = -Wall -Wextra
 COLLECTION_DEPS = collection.h
 
+all: main
+
 main: main.o exhaustivePropagation.o collectionHandler.o printer.o
 	${CC} ${LFLAGS} main.o exhaustivePropagation.o collectionHandler.o printer.o -o main
 
@@ -17,3 +19,6 @@ exhaustivePropagation.o: ${COLLECTION_H} handler.h printer.h exhaustivePropagati
 
 printer.o: ${COLLECTION_DEPS} printer.c
 	${CC} ${CFLAGS} printer.c
+
+clean:
+	rm *.o main
