@@ -1,4 +1,4 @@
-#include "propogate.h"
+#include "propagate.h"
 
 int main() {
     determineUnitClauses();

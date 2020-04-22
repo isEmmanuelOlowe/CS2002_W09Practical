@@ -3,9 +3,9 @@
 #include "printer.h"
 
 /*
-* performs a single instance of unit propogation.
+* performs a single instance of unit propagation.
 */
-clause* propogate(monoClause* mono, clause* expression) {
+clause* propagate(monoClause* mono, clause* expression) {
   //Gets the head of the clauses to loop of every unit it contains.
   clause* current = expression;
   //stores the next of a clause in the event that an individual negative unit is found and needs to be removed.
@@ -17,7 +17,7 @@ clause* propogate(monoClause* mono, clause* expression) {
     //stores the result of checking if there are the same literal and what type they are.
     int state;
     //quick fix
-    //some lines have been cleared as propgation on them is done.
+    //some lines have been cleared as propagation on them is done.
     if ( mono->unitClause != NULL && current->clauseName != NULL) {
       state = contains(mono->unitClause, current->clauseName);
     }
@@ -104,12 +104,12 @@ clause* propogate(monoClause* mono, clause* expression) {
   return expression;
 }
 
-formula* unitPropogation(monoClause* mono, formula* clauses) {
+formula* unitPropagation(monoClause* mono, formula* clauses) {
   //For storing the current formula
   formula* currentFormula = clauses;
   //Stores the head of the new formula that will be returned.
   formula* base = (formula *) malloc(sizeof(formula));
-  //stores the current clause that propgation has been ran on.
+  //stores the current clause that propagation has been ran on.
   formula* nextClauses = base;
   //Determins if contradiction has been found.
   int invalid = NEGATIVE;
@@ -119,9 +119,9 @@ formula* unitPropogation(monoClause* mono, formula* clauses) {
   while(currentFormula != NULL) {
     //gets the clause from formula
     clause* currentClause = currentFormula->formulaName;
-    //this gets the updated clause from propogate after unit propgation is ran on it.
-    clause* newClause = propogate(mono, currentClause);
-    //if unit propgation returns null then there was a contradiction.
+    //this gets the updated clause from propogate after unit propagation is ran on it.
+    clause* newClause = propagate(mono, currentClause);
+    //if unit propagation returns null then there was a contradiction.
     if (newClause != NULL) {
       //checks if the head has anything it and if not adds it to the head of linked list.
       if (base->formulaName == NULL) {
@@ -155,8 +155,8 @@ formula* unitPropogation(monoClause* mono, formula* clauses) {
   return base;
 }
 
-monoClause* propogateOver(monoClause* unitClauses, formula* clauses) {
-  //stores the first unit clauses to be remove with propogation
+monoClause* propagateOver(monoClause* unitClauses, formula* clauses) {
+  //stores the first unit clauses to be remove with propagation
   monoClause* current = unitClauses;
   //stores the order linked list of mono clauses
   monoClause* orderMono = NULL;
@@ -165,7 +165,7 @@ monoClause* propogateOver(monoClause* unitClauses, formula* clauses) {
   //runs untill no unit clauses are left.
   while(current != NULL){
     //gets the remaining clauses which unit progation must be ran on.
-    remainingClauses = unitPropogation(current, remainingClauses);
+    remainingClauses = unitPropagation(current, remainingClauses);
     //remaining clauses returns null if a contradiction if found.
     if (remainingClauses == NULL) {
       return NULL;
@@ -184,7 +184,7 @@ monoClause* propogateOver(monoClause* unitClauses, formula* clauses) {
 }
 
 /*
-* Determins the total number of unit clauses obtainable through unit propogation.
+* Determins the total number of unit clauses obtainable through unit propagation.
 */
 void determineUnitClauses() {
 
@@ -201,7 +201,7 @@ void determineUnitClauses() {
   }
 
   //prints the found clauses or prints contradiction if one was found.
-  monoClause* foundClauses = propogateOver(unitClauses, clauses);
+  monoClause* foundClauses = propagateOver(unitClauses, clauses);
   if (foundClauses == NULL) {
     printContradiction();
   }

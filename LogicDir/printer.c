@@ -56,4 +56,5 @@ void printFound(monoClause* foundClauses) {
     }
     current = current->next;
   }
+  printf("\n");
 }
