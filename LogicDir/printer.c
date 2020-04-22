@@ -40,14 +40,21 @@ void printUnit(literal* expression) {
 * No space is added at the end.
 */
 void printFound(monoClause* foundClauses) {
+  int first = TRUE;
   monoClause* current = foundClauses;
   //Since it is non-empty there must be atleast 1 unit clause present.
-  printUnit(current->unitClause);
   //prints the remaining unit clauses obtianable.
-  current = current->next;
   while(current != NULL) {
-    printf(" ");
-    printUnit(current->unitClause);
+    //skips empty literals
+    if (strcmp(current->unitClause->unitName, "") != 0){
+      if (first == FALSE) {
+        printf(" ");
+      }
+      else {
+        first = FALSE;
+      }
+      printUnit(current->unitClause);
+    }
     current = current->next;
   }
 }
