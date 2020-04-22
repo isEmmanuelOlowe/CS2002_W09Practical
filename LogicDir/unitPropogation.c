@@ -1,23 +1,26 @@
 #include "collection.h"
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdio.h>
+#include "handler.h"
+#include "printer.h"
 
 
+/*
+* Determins the total number of unit clauses obtainable through unit propogation.
+*/
+void determineUnitClauses() {
 
-void determineUnitClauses(int lines, char **expression) {
-  formula* clauses = createClauses(lines, expression);
+  //prints contradiction in the event an empty line was found.
+  formula* clauses = createClauses();
   if (clauses == NULL) {
     printContradiction();
   }
 
+  //prints empty if no unit clauses were found.
   monoClause* unitClauses = generateMonoClauses(clauses);
   if (unitClauses == NULL) {
     printEmpty();
   }
 
+  //prints the found clauses or prints contradiction if one was found.
   monoClause* foundClauses = propogateOver(unitClauses, clauses);
   if (foundClauses == NULL) {
     printContradiction();
@@ -27,256 +30,183 @@ void determineUnitClauses(int lines, char **expression) {
   }
 }
 
-void printUnit(unit * expression) {
-  if (expression->type == POSITIVE) {
-    printf("%s", expression->uname);
-  }
-  else {
-    printf("-%s", expression->uname);
-  }
-}
-
-void printFound(monoClause* foundClauses) {
-  monoClause* current = foundClauses;
-  printUnit(current->mname);
-  current->next;
+/*
+* performs a single instance of unit propogation.
+*/
+clause* propogate(monoClause* mono, clause* expression) {
+  //Gets the head of the clauses to loop of every unit it contains.
+  clause* current = expression;
+  //stores the next of a clause in the event that an individual negative unit is found and needs to be removed.
+  clause* newClause = NULL;
+  //stores the head of a clause in the event that an individual negative unit is found and needs to be removed.
+  clause* newCurrent = NULL;
+  //Loops unit no clauses units are remaining.
   while(current != NULL) {
-    printf(" ");
-    printUnit(current->mname);
-  }
-}
-
-void freeFormula(formula* expression) {
-  formula* current = expression;
-  while(current!=NULL) {
-    formula* temp = current;
-    current = current->next;
-    freeClause(temp->fname);
-    free(temp);
-  }
-}
-
-int contains(unit* expression1, unit* expression2) {
-  if (strcmp(expression1->uname, expression2->uname) == 0) {
-    if (expression1->type == expression1->type) {
-      return POSITIVE;
+    //stores the result of checking if there are the same literal and what type they are.
+    int state;
+    //quick fix
+    //some lines have been cleared as propgation on them is done.
+    if ( mono->unitClause != NULL && current->clauseName != NULL) {
+      state = contains(mono->unitClause, current->clauseName);
     }
     else {
-      return NEGATIVE;
+      // these lines are now ignored.
+      state = - 1;
     }
-  }
-  return - 1;
-}
-
-void freeClause(clause* expression) {
-  clause* current = expression;
-  while(current!=NULL) {
-    clause* temp = current;
-    current = current->next;
-    free(temp->cname);
-    free(temp);
-  }
-}
-clause* propogate(monoClause* mono, clause* expression) {
-  clause* current = expression;
-  clause* newClause = NULL;
-  clause* newCurrent = NULL;
-  while(current != NULL) {
-    int state = contains(mono->mname, current->cname);
+    //In the event that they are identical.
+    //ALl items are cleared as they do not provide to the truth value.
     if (state == POSITIVE) {
-      freeClause(expression);
-      return NULL;
+      //loops over to ensure it doesn't remove it self from the clause.
+      while(expression != NULL) {
+        clause* temp = expression->next;
+        //checks that the it doesn't free itself.
+        if (expression->clauseName != mono->unitClause) {
+          //free all other clauses
+          free(expression->clauseName);
+          free(expression);
+        }
+        else {
+          //free the clauses that stores it.
+          free(expression);
+        }
+        //goes to the next one
+        expression = temp;
+      }
+      //creates an empty clause to return.
+      clause* empty = (clause *) malloc(sizeof(clause));
+      empty -> clauseName = NULL;
+      empty -> next = NULL;
+      return empty;
     }
+    //in the event that a negative literal is found and has to be removed
     else if (state == NEGATIVE) {
-      newCurrent->next = current->next;
-      free(current->cname);
+      //gets the next of the current clause
+      //possible could be NULL.
+      newClause = current->next;
+      //frees both current and the next
+      free(current->clauseName);
       free(current);
-      if (newClause->next == NULL) {
-        monoClause* monoCurrent = mono;
-        while(1){
-          if (monoCurrent->next != NULL) {
-            monoCurrent->next->mname = newClause->cname;
-            newClause->cname = NULL;
-            return newClause;
+      //Check if the head is NULL
+      if (newCurrent == NULL) {
+        //sets the next of the removed clause to be the head of the linked list.
+        newCurrent = newClause;
+      }
+      else {
+        //adds it to the end of the linked list.
+        newCurrent->next = newClause;
+      }
+
+      //checks the linked list is not empty
+      if (newCurrent != NULL) {
+        //checks there is only 1 item in the linked list.
+        if (newCurrent->next == NULL) {
+          //loops until we get to the end of mono linked list.
+          while(1) {
+            //finds the last item because the end is not null
+            if (mono->next == NULL) {
+              //adds the character to the end.
+              mono ->next = (monoClause*) malloc(sizeof(monoClause));
+              mono->next->unitClause = newCurrent->clauseName;
+              mono->next->next = NULL;
+              break;
+            }
+            //goe to the next node.
+            mono = mono->next;
           }
-          monoCurrent = monoCurrent->next;
         }
       }
-      return newClause;
+      //returns the head of the next clause.
+      return newCurrent;
     }
-    if (newClause == NULL){
-      newClause = current;
-      newCurrent = newClause;
-    }
-    else {
+    //checks if a node has been found before current
+    if (newCurrent == NULL){
       newCurrent = current;
     }
+    else {
+      //changes the previous node found to the current.
+      newCurrent = current;
+    }
+    //updates the current node.
+    current = current->next;
   }
   return expression;
 }
 
 formula* unitPropogation(monoClause* mono, formula* clauses) {
+  //For storing the current formula
   formula* currentFormula = clauses;
+  //Stores the head of the new formula that will be returned.
   formula* base = (formula *) malloc(sizeof(formula));
+  //stores the current clause that propgation has been ran on.
   formula* nextClauses = base;
+  //Determins if contradiction has been found.
+  int invalid = NEGATIVE;
+  //intialising it so it is empty.
   nextClauses-> fname = NULL;
+  //Loops over every clause that propogation is ran on.
   while(currentFormula != NULL) {
+    //gets the clause from formula
     clause* currentClause = currentFormula->fname;
+    //this gets the updated clause from propogate after unit propgation is ran on it.
     clause* newClause = propogate(mono, currentClause);
+    //if unit propgation returns null then there was a contradiction.
     if (newClause != NULL) {
-      if (nextClauses->fname == NULL) {
-        nextClauses->fname = newClause;
+      //checks if the head has anything it and if not adds it to the head of linked list.
+      if (base->fname == NULL) {
+        //adds it to the head of the linked list.
+        base->fname = newClause;
       }
       else {
+        //This then creates space for the next item in the linked list.
         nextClauses->next = (formula *) malloc(sizeof(formula));
-        nextClauses->next->expression = newClause;
+        //This then adds the new clause to the next item in the linked list.
+        nextClauses->next->fname = newClause;
+        nextClauses->next->next = NULL;
+        //moves to the next node in the lisked list.
         nextClauses = nextClauses->next;
       }
     }
-    formula* temp = currentFormula;
+    else {
+      //invalid since contradiction was found.
+      invalid = POSITIVE;
+      break;
+    }
+    //goes to next node in linked list.
     currentFormula = currentFormula->next;
-    free(temp);
   }
-  if (base->fname == NULL){
-    free(base);
+  //prints it was invalid
+  if (invalid == POSITIVE) {
+    freeFormula(base);
     return NULL;
   }
+  //returns the base.
   return base;
-}
-
-
-monoClause* addSorted(monoClause* mono, unit* expression) {
-  if (mono == NULL) {
-    mono = (monoClause *) malloc(sizeof(monoClause));
-    mono->mname = expression;
-    return mono;
-  }
-  else if (strcmp(mono->mname, expression->uname) < 0) {
-    monoClause* newItem = (monoClause *) malloc(sizeof(monoClause));
-    newItem->mname = expression;
-    newItem->next = mono;
-    return newItem;
-  }
-  else {
-    mono->next = addSorted(mono->next, expression);
-  }
 }
 
 monoClause* propogateOver(monoClause* unitClauses, formula* clauses) {
-  monoClause* foundClauses = (monoClause*) malloc(sizeof(monoClause));
+  //stores the first unit clauses to be remove with propogation
   monoClause* current = unitClauses;
+  //stores the order linked list of mono clauses
   monoClause* orderMono = NULL;
+  //stores the reminaing clauses for which unit propogation must be ran on.
   formula* remainingClauses = clauses;
+  //runs untill no unit clauses are left.
   while(current != NULL){
+    //gets the remaining clauses which unit progation must be ran on.
     remainingClauses = unitPropogation(current, remainingClauses);
+    //remaining clauses returns null if a contradiction if found.
     if (remainingClauses == NULL) {
       return NULL;
     }
+    //adds the ordered mono together in a sorted order.
+    orderMono = addSorted(orderMono, current->unitClause);
+    //Gets the current monoclause to be freeded later
     monoClause* temp = current;
+    //goes to the next mono clause
     current = current->next;
-    orderMono = addSorted(orderMono, current->mname);
+    //free the mono clause
     free(temp);
   }
+  //return the ordered linked list
   return orderMono;
-}
-
-void printEmpty() {
-  printf("");
-  exit(1);
-}
-
-monoClause* generateMonoClauses(formula* clauses) {
-  formula* currentFormula = clauses;
-  monoClause* base = (monoClause *) malloc(sizeof(monoClause));
-  monoClause* currentClause = base;
-  currentClause->mname = NULL;
-  while (currentFormula!=NULL){
-    if (currentFormula->fname->next == NULL) {
-      if(currentClause->mname == NULL) {
-        currentClause->mname = currentFormula->fname->next;
-      }
-      else {
-        currentClause->next = (monoClause *) malloc(sizeof(monoClause));
-        currentClause->next->mname = currentFormula->fname->next;
-        currentClause = currentClause->next;
-      }
-    }
-    currentFormula = currentFormula->next;
-  }
-  if (base-> mname == NULL){
-    free(base);
-    return NULL;
-  }
-  return base;
-}
-
-void printContradiction(){
-  printf("-");
-  exit(1);
-}
-
-//need to free dynamically allocated space
-formula* createClauses(int lines, char **expression) {
-  contradiction invalid = FALSE;
-  formula* base;
-  base = (formula *) malloc(sizeof(formula));
-  formula* current = base;
-  //ignores last line as it is empty
-  for (int i = 1; i < lines - 1; i++) {
-    if (current == NULL) {
-      current = (formula *) malloc(sizeof(formula));
-    }
-   current->fname = generateClause(expression[i]);
-   if (current->fname == NULL) {
-     invalid = TRUE;
-     break;
-   }
-   current = current->next;
-  }
-  if (invalid == TRUE) {
-    return NULL;
-  }
-  return base;
-}
-
-//free dynamically allocated space.
-clause* generateClause(char *line) {
-  contradiction invalid = FALSE;
-  clause* base;
-  base = (clause *) malloc(sizeof(clause));
-  char* expression = strtok(line, " \t");
-  clause* current = base;
-  current->cname = NULL;
-  while (expression != NULL) {
-    if (expression == "\n") {
-      invalid = TRUE;
-      break;
-    }
-    if (current->cname == NULL) {
-      current->cname = generateLiteral(expression);
-    }
-    else {
-      current->next = (clause *) malloc(sizeof(clause));
-      current->next->cname = generateLiteral(expression);
-      current = current->next;
-    }
-    expression = strtok(NULL, " \t");
-  }
-  if (invalid == TRUE) {
-    return NULL;
-  }
-  return base;
-}
-
-unit* generateLiteral(char *name) {
-  unit* expression = (unit *) malloc(sizeof(unit));
-  if (name[0] == "-"){
-    expression->uname = name + 1;
-    expression->type = NEGATIVE;
-  }
-  else {
-    expression->uname = name;
-    expression->type = POSITIVE;
-  }
-  return expression;
 }
