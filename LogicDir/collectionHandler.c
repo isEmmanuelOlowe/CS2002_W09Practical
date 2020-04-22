@@ -116,13 +116,20 @@ clause* generateClause(char *line) {
 */
 formula* createClauses() {
   //assumes there is a contradiction
-  contradiction invalid = FALSE;
+  contradiction invalid = TRUE;
   formula* base = (formula *) malloc(sizeof(formula));
   formula* current = base;
   current->formulaName = NULL;
   char * string = NULL;
   unsigned long newsize = 0;
   while(getline(&string, &newsize, stdin) != -1) {
+    //checks the first line is not empty
+    if (invalid == TRUE && strcmp(string, "") == 0){
+      break;
+    }
+    else {
+      invalid = FALSE;
+    }
     //checks if it is the head of the linked list.
     if (base->formulaName == NULL) {
      current->formulaName = generateClause(string);
